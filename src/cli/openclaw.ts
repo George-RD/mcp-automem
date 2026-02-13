@@ -39,7 +39,10 @@ function detectProjectName(): string {
   }
   // 2) git remote
   try {
-    const remote = execSync('git remote get-url origin 2>/dev/null', { encoding: 'utf8' }).trim();
+    const remote = execSync('git remote get-url origin', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
     if (remote) {
       const match = remote.match(/\/([^/]+?)(\.git)?$/);
       if (match) return match[1];
