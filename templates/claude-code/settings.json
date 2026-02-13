@@ -30,6 +30,15 @@
             "command": "CLAUDE_HOOK_TYPE=deploy bash \"$HOME/.claude/hooks/capture-deployment.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$HOME/.claude/hooks/capture-git-workflow.sh\""
+          }
+        ]
       }
     ],
     "Stop": [
