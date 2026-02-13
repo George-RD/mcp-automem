@@ -263,9 +263,6 @@ function configureEnvVars(options: OpenClawSetupOptions): void {
 
   const { config, configPath } = result;
 
-  const endpoint = options.endpoint || process.env.AUTOMEM_ENDPOINT || 'http://127.0.0.1:8001';
-  const apiKey = options.apiKey || process.env.AUTOMEM_API_KEY || '';
-
   // Deep-merge skills.entries.automem
   if (!config.skills) config.skills = {};
   if (!config.skills.entries) config.skills.entries = {};
@@ -274,6 +271,9 @@ function configureEnvVars(options: OpenClawSetupOptions): void {
   const automemEntry = isPlainObject(rawAutomem) ? rawAutomem : {};
   const rawEnv = automemEntry.env;
   const existingEnv = isPlainObject(rawEnv) ? rawEnv : {};
+  const existingEndpoint = typeof existingEnv.AUTOMEM_ENDPOINT === 'string' ? existingEnv.AUTOMEM_ENDPOINT : undefined;
+  const endpoint = options.endpoint || process.env.AUTOMEM_ENDPOINT || existingEndpoint || 'http://127.0.0.1:8001';
+  const apiKey = options.apiKey || process.env.AUTOMEM_API_KEY || '';
 
   // CLI flags override existing config; existing config fills in gaps
   config.skills.entries.automem = {
