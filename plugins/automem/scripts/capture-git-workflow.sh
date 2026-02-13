@@ -69,7 +69,14 @@ if echo "$COMMAND" | grep -qi "git commit"; then
     fi
 
     # Skip merge commits entirely - zero information content
-    if echo "$COMMIT_MSG" | grep -qi "^Merge branch"; then
+    MERGE_PARENTS=""
+    if [ -n "$CWD" ] && [ -d "$CWD" ]; then
+        MERGE_PARENTS=$(cd "$CWD" && git rev-list --parents -n 1 HEAD 2>/dev/null)
+    else
+        MERGE_PARENTS=$(git rev-list --parents -n 1 HEAD 2>/dev/null)
+    fi
+    PARENT_COUNT=$(echo "$MERGE_PARENTS" | awk '{print NF - 1}')
+    if [ -n "$PARENT_COUNT" ] && [ "$PARENT_COUNT" -gt 1 ] 2>/dev/null; then
         log_message "Skipping merge commit: $COMMIT_MSG"
         SCRIPT_SUCCESS=true
         exit 0

@@ -1,6 +1,6 @@
 name: Semantic PR Title
 
-on:
+'on':
   pull_request:
     types: [opened, edited, synchronize, reopened]
 
@@ -27,4 +27,3 @@ jobs:
             perf
             revert
           requireScope: false
-

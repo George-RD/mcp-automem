@@ -12,7 +12,7 @@ Connect AutoMem (graph-vector memory) to **OpenClaw**, the personal AI assistant
 
 ## Architecture
 
-```
+```text
 Bot → bash curl → AutoMem HTTP API (FalkorDB + Qdrant)
 ```
 
@@ -81,12 +81,13 @@ The CLI is idempotent. Running it again updates the skill file and config. Backu
 
 ### Skill File
 
-```
+```text
 ~/.openclaw/skills/automem/
 └── SKILL.md
 ```
 
 The skill teaches the bot to call AutoMem's HTTP API directly with `curl`. It includes:
+
 - API reference (store, recall, associate, update, delete, health)
 - Auth header handling (`$AUTOMEM_API_KEY` when set)
 - Behavioral rules (when to recall, when to store, importance levels, tagging)

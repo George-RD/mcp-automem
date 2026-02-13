@@ -336,8 +336,17 @@ function configureEnvVars(options: OpenClawSetupOptions): void {
   };
 
   if (options.dryRun) {
+    const automemEntry = config.skills.entries.automem;
+    const redactedAutomemEntry = {
+      ...automemEntry,
+      env: {
+        ...automemEntry.env,
+        ...(automemEntry.env?.AUTOMEM_API_KEY ? { AUTOMEM_API_KEY: '[REDACTED]' } : {}),
+      },
+    };
+
     log(`[DRY RUN] Would update: ${configPath}`, options.quiet);
-    log(`[DRY RUN] skills.entries.automem = ${JSON.stringify(config.skills.entries.automem, null, 2)}`, options.quiet);
+    log(`[DRY RUN] skills.entries.automem = ${JSON.stringify(redactedAutomemEntry, null, 2)}`, options.quiet);
     return;
   }
 

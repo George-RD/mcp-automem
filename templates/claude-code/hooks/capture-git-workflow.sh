@@ -35,6 +35,12 @@ fi
 
 # Read JSON input from stdin (Claude Code hook format per docs)
 INPUT_JSON=$(cat)
+EXIT_CODE="${CLAUDE_EXIT_CODE:-0}"
+
+# Skip failed commands to avoid recording stale state
+if [ "$EXIT_CODE" -ne 0 ]; then
+    exit 0
+fi
 
 # Parse JSON fields using jq
 COMMAND=$(echo "$INPUT_JSON" | jq -r '.tool_input.command // ""')
@@ -69,7 +75,7 @@ if echo "$COMMAND" | grep -qi "git commit"; then
     fi
 
     # Skip merge commits entirely - zero information content
-    if echo "$COMMIT_MSG" | grep -qi "^Merge branch"; then
+    if echo "$COMMIT_MSG" | grep -qiE '^Merge (branch|pull request)'; then
         log_message "Skipping merge commit: $COMMIT_MSG"
         SCRIPT_SUCCESS=true
         exit 0
