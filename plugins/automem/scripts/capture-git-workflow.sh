@@ -19,6 +19,21 @@ log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
 }
 
+# Redact likely secrets from logged commands
+sanitize_command_for_log() {
+    local value="$1"
+    value=$(echo "$value" | perl -pe '
+        s/(Authorization:\s*Bearer\s+)[^\s"'"'"'`]+/${1}[REDACTED]/ig;
+        s/(--token(?:=|\s+))\S+/${1}[REDACTED]/ig;
+        s/((?:^|\s)(?:GH_TOKEN|GITHUB_TOKEN|AUTOMEM_API_KEY|API_KEY)=)\S+/${1}[REDACTED]/ig;
+        s/\b(token|api[_-]?key)\s*[:=]\s*([^\s"'"'"'`,;]+)/$1=[REDACTED]/ig;
+    ')
+    if [ ${#value} -gt 200 ]; then
+        value="${value:0:200}..."
+    fi
+    echo "$value"
+}
+
 # Check required dependencies
 if ! command -v jq >/dev/null 2>&1; then
     echo "Warning: jq not installed - git workflow capture disabled" >&2
@@ -53,7 +68,8 @@ if [ -z "$COMMAND" ] || ! echo "$COMMAND" | grep -qiE "(git commit|gh (issue|pr|
     exit 0
 fi
 
-log_message "Git workflow command detected: $COMMAND"
+SAFE_COMMAND=$(sanitize_command_for_log "$COMMAND")
+log_message "Git workflow command detected: $SAFE_COMMAND"
 
 # Determine workflow type and extract details
 WORKFLOW_TYPE="unknown"
@@ -241,10 +257,11 @@ MEMORY_RECORD=$(jq -cn \
     }')
 
 # Write to queue with portable file locking
-AUTOMEM_QUEUE="$MEMORY_QUEUE" \
+if ! AUTOMEM_QUEUE="$MEMORY_QUEUE" \
 AUTOMEM_RECORD="$MEMORY_RECORD" \
 python3 - <<'PY'
 import os
+import sys
 
 try:
     import fcntl
@@ -277,15 +294,23 @@ def unlock_file(handle):
 
 queue_path = os.environ.get("AUTOMEM_QUEUE", "")
 record = os.environ.get("AUTOMEM_RECORD", "")
-if queue_path and record:
-    os.makedirs(os.path.dirname(queue_path), exist_ok=True)
-    with open(queue_path, "a", encoding="utf-8") as handle:
-        lock_file(handle)
-        try:
-            handle.write(record + "\n")
-        finally:
-            unlock_file(handle)
+try:
+    if queue_path and record:
+        os.makedirs(os.path.dirname(queue_path), exist_ok=True)
+        with open(queue_path, "a", encoding="utf-8") as handle:
+            lock_file(handle)
+            try:
+                handle.write(record + "\n")
+            finally:
+                unlock_file(handle)
+except Exception as exc:
+    print(f"queue write failed: {exc}", file=sys.stderr)
+    sys.exit(1)
 PY
+then
+    log_message "Failed to queue $WORKFLOW_TYPE memory"
+    exit 1
+fi
 
 log_message "Queued $WORKFLOW_TYPE memory (importance=$IMPORTANCE): $CONTENT"
 

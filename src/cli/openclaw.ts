@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
+import JSON5 from 'json5';
 
 interface OpenClawSetupOptions {
   workspace?: string;
@@ -22,59 +23,8 @@ function log(message: string, quiet?: boolean) {
   if (!quiet) console.log(message);
 }
 
-/**
- * Strip JSON5-style comments without corrupting URLs or strings containing `//`.
- * Handles single-line, block, and trailing commas.
- */
-function stripJsonComments(raw: string): string {
-  // Walk through the string character by character to respect quoted strings
-  let result = '';
-  let inString = false;
-  let i = 0;
-  while (i < raw.length) {
-    const ch = raw[i];
-    const next = raw[i + 1];
-
-    if (inString) {
-      result += ch;
-      if (ch === '\\') {
-        // Skip escaped character
-        result += next || '';
-        i += 2;
-        continue;
-      }
-      if (ch === '"') inString = false;
-      i++;
-      continue;
-    }
-
-    if (ch === '"') {
-      inString = true;
-      result += ch;
-      i++;
-      continue;
-    }
-
-    // Single-line comment
-    if (ch === '/' && next === '/') {
-      while (i < raw.length && raw[i] !== '\n') i++;
-      continue;
-    }
-
-    // Block comment
-    if (ch === '/' && next === '*') {
-      i += 2;
-      while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
-      i += 2; // skip closing */
-      continue;
-    }
-
-    result += ch;
-    i++;
-  }
-
-  // Strip trailing commas before } or ]
-  return result.replace(/,\s*([}\]])/g, '$1');
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
 function detectProjectName(): string {
@@ -207,8 +157,9 @@ function readWorkspaceFromConfig(): string | null {
     if (!fs.existsSync(configPath)) continue;
     try {
       const raw = fs.readFileSync(configPath, 'utf8');
-      const stripped = stripJsonComments(raw);
-      const config = JSON.parse(stripped);
+      const parsed = JSON5.parse(raw);
+      if (!isPlainObject(parsed)) continue;
+      const config = parsed as Record<string, any>;
 
       const defaultWorkspace = config?.agents?.defaults?.workspace;
       if (defaultWorkspace && typeof defaultWorkspace === 'string') {
@@ -226,7 +177,7 @@ function readWorkspaceFromConfig(): string | null {
         }
       }
     } catch {
-      // JSON5 parsing failed, continue
+      // Parsing failed, continue
     }
   }
 
@@ -247,8 +198,8 @@ function readOpenClawConfig(): { config: any; configPath: string } | null {
 
   try {
     const raw = fs.readFileSync(configPath, 'utf8');
-    const stripped = stripJsonComments(raw);
-    return { config: JSON.parse(stripped), configPath };
+    const parsed = JSON5.parse(raw);
+    return { config: isPlainObject(parsed) ? parsed : {}, configPath };
   } catch {
     return { config: {}, configPath };
   }
@@ -322,11 +273,14 @@ function configureEnvVars(options: OpenClawSetupOptions): void {
   if (!config.skills) config.skills = {};
   if (!config.skills.entries) config.skills.entries = {};
 
-  const existingEnv = config.skills.entries?.automem?.env || {};
+  const rawAutomem = config.skills.entries?.automem;
+  const automemEntry = isPlainObject(rawAutomem) ? rawAutomem : {};
+  const rawEnv = automemEntry.env;
+  const existingEnv = isPlainObject(rawEnv) ? rawEnv : {};
 
   // CLI flags override existing config; existing config fills in gaps
   config.skills.entries.automem = {
-    ...config.skills.entries.automem,
+    ...automemEntry,
     enabled: true,
     env: {
       ...existingEnv,
@@ -336,12 +290,15 @@ function configureEnvVars(options: OpenClawSetupOptions): void {
   };
 
   if (options.dryRun) {
-    const automemEntry = config.skills.entries.automem;
+    const dryRunAutomemEntry = isPlainObject(config.skills.entries.automem)
+      ? config.skills.entries.automem
+      : {};
+    const dryRunEnv = isPlainObject(dryRunAutomemEntry.env) ? dryRunAutomemEntry.env : {};
     const redactedAutomemEntry = {
-      ...automemEntry,
+      ...dryRunAutomemEntry,
       env: {
-        ...automemEntry.env,
-        ...(automemEntry.env?.AUTOMEM_API_KEY ? { AUTOMEM_API_KEY: '[REDACTED]' } : {}),
+        ...dryRunEnv,
+        ...(typeof dryRunEnv.AUTOMEM_API_KEY === 'string' ? { AUTOMEM_API_KEY: '[REDACTED]' } : {}),
       },
     };
 
@@ -391,14 +348,19 @@ export async function applyOpenClawSetup(cliOptions: OpenClawSetupOptions): Prom
   const workspaceDir = resolveWorkspaceDir(cliOptions.workspace);
 
   if (!workspaceDir) {
-    console.error(`\n❌ Could not find OpenClaw workspace directory.`);
-    console.error(`\n   Checked:`);
-    console.error(`   • OPENCLAW_WORKSPACE environment variable`);
-    console.error(`   • OpenClaw config (~/.openclaw/openclaw.json)`);
-    console.error(`   • ~/.openclaw/workspace`);
-    console.error(`   • ~/clawd`);
-    console.error(`\n   Use --workspace <path> to specify manually.`);
-    process.exit(1);
+    const details = [
+      '',
+      '❌ Could not find OpenClaw workspace directory.',
+      '',
+      '   Checked:',
+      '   • OPENCLAW_WORKSPACE environment variable',
+      '   • OpenClaw config (~/.openclaw/openclaw.json)',
+      '   • ~/.openclaw/workspace',
+      '   • ~/clawd',
+      '',
+      '   Use --workspace <path> to specify manually.',
+    ].join('\n');
+    throw new Error(details);
   }
 
   log(`\n🔧 Setting up OpenClaw AutoMem for: ${projectName}`, cliOptions.quiet);
@@ -496,5 +458,11 @@ function parseArgs(args: string[]): OpenClawSetupOptions {
 
 export async function runOpenClawSetup(args: string[] = []): Promise<void> {
   const options = parseArgs(args);
-  await applyOpenClawSetup(options);
+  try {
+    await applyOpenClawSetup(options);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(message);
+    process.exit(1);
+  }
 }
