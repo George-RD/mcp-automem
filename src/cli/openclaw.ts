@@ -110,7 +110,7 @@ function resolveWorkspaceDir(explicit?: string): string | null {
   const envWorkspace = process.env.OPENCLAW_WORKSPACE || process.env.CLAWDBOT_WORKSPACE;
   if (envWorkspace) {
     const resolved = resolveTildePath(envWorkspace);
-    if (fs.existsSync(resolved)) return resolved;
+    return resolved;
   }
 
   // 3. OpenClaw config file

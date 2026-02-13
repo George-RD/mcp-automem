@@ -23,7 +23,7 @@ log_message() {
 sanitize_command_for_log() {
     local value="$1"
     value=$(echo "$value" | perl -pe '
-        s/(Authorization:\s*Bearer\s+)[^\s"'"'"'`]+/${1}[REDACTED]/ig;
+        s/(Authorization:\s*(?:Bearer|token)\s+)[^\s"'"'"'`]+/${1}[REDACTED]/ig;
         s/(--token(?:=|\s+))\S+/${1}[REDACTED]/ig;
         s/((?:^|\s)(?:GH_TOKEN|GITHUB_TOKEN|AUTOMEM_API_KEY|API_KEY)=)\S+/${1}[REDACTED]/ig;
         s/\b(token|api[_-]?key)\s*[:=]\s*([^\s"'"'"'`,;]+)/$1=[REDACTED]/ig;
