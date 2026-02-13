@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$HOME/.claude/hooks/capture-git-workflow.sh\""
+            "command": "CLAUDE_HOOK_TYPE=git_workflow bash \"$HOME/.claude/hooks/capture-git-workflow.sh\""
           }
         ]
       }

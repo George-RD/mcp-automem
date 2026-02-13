@@ -3,10 +3,6 @@
 # Capture Git Workflow Hook for AutoMem
 # Records git commits, GitHub issues, and PR merges with importance tiering
 
-# Conditional success output (only on clean exit)
-SCRIPT_SUCCESS=false
-trap '[ "$SCRIPT_SUCCESS" = true ] && echo "Success"' EXIT
-
 LOG_FILE="$HOME/.claude/logs/git-workflow.log"
 MEMORY_QUEUE="$HOME/.claude/scripts/memory-queue.jsonl"
 
@@ -101,7 +97,6 @@ if echo "$COMMAND" | grep -qi "git commit"; then
     PARENT_COUNT=$(echo "$MERGE_PARENTS" | awk '{print NF - 1}')
     if [ -n "$PARENT_COUNT" ] && [ "$PARENT_COUNT" -gt 1 ] 2>/dev/null; then
         log_message "Skipping merge commit: $COMMIT_MSG"
-        SCRIPT_SUCCESS=true
         exit 0
     fi
 
@@ -317,6 +312,4 @@ then
 fi
 
 log_message "Queued $WORKFLOW_TYPE memory (importance=$IMPORTANCE): $CONTENT"
-
-SCRIPT_SUCCESS=true
 exit 0
