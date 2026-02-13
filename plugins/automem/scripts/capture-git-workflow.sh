@@ -35,6 +35,12 @@ fi
 
 # Read JSON input from stdin (Claude Code hook format per docs)
 INPUT_JSON=$(cat)
+EXIT_CODE="${CLAUDE_EXIT_CODE:-0}"
+
+# Skip failed commands to avoid recording stale state
+if [ "$EXIT_CODE" -ne 0 ]; then
+    exit 0
+fi
 
 # Parse JSON fields using jq
 COMMAND=$(echo "$INPUT_JSON" | jq -r '.tool_input.command // ""')

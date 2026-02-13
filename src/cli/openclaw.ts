@@ -485,6 +485,9 @@ function parseArgs(args: string[]): OpenClawSetupOptions {
         options.quiet = true;
         break;
       default:
+        if (arg.startsWith('-')) {
+          console.warn(`Warning: Unknown option "${arg}" ignored. Use --help for supported options.`);
+        }
         break;
     }
   }
