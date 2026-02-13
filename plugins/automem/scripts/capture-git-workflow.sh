@@ -275,13 +275,15 @@ try:
 except ImportError:
     msvcrt = None
 
+WINDOWS_LOCK_LEN = 0x7FFFFFFF
+
 def lock_file(handle):
     if fcntl is not None:
         fcntl.flock(handle, fcntl.LOCK_EX)
         return
     if msvcrt is not None:
         handle.seek(0)
-        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, WINDOWS_LOCK_LEN)
 
 def unlock_file(handle):
     if fcntl is not None:
@@ -290,7 +292,7 @@ def unlock_file(handle):
     if msvcrt is not None:
         try:
             handle.seek(0)
-            msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, WINDOWS_LOCK_LEN)
         except OSError:
             pass
 

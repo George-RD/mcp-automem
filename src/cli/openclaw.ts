@@ -186,9 +186,8 @@ function readWorkspaceFromConfig(): string | null {
 
 /**
  * Read and return the OpenClaw config (openclaw.json).
- * Returns null if file doesn't exist or can't be parsed.
  */
-function readOpenClawConfig(): { config: any; configPath: string } | null {
+function readOpenClawConfig(): { config: any; configPath: string } {
   const homeDir = os.homedir();
   const configPath = path.join(homeDir, '.openclaw', 'openclaw.json');
 
@@ -261,7 +260,6 @@ function installSkill(options: OpenClawSetupOptions): void {
  */
 function configureEnvVars(options: OpenClawSetupOptions): void {
   const result = readOpenClawConfig();
-  if (!result) return;
 
   const { config, configPath } = result;
 
