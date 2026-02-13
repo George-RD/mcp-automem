@@ -380,7 +380,18 @@ export async function applyOpenClawSetup(cliOptions: OpenClawSetupOptions): Prom
   cleanOldAgentsBlock(workspaceDir, cliOptions);
 
   // Summary
-  const endpoint = cliOptions.endpoint || process.env.AUTOMEM_ENDPOINT || 'http://127.0.0.1:8001';
+  const { config: summaryConfig } = readOpenClawConfig();
+  const summaryAutomem = isPlainObject(summaryConfig?.skills?.entries?.automem)
+    ? summaryConfig.skills.entries.automem
+    : {};
+  const summaryEnv = isPlainObject(summaryAutomem.env) ? summaryAutomem.env : {};
+  const existingSummaryEndpoint =
+    typeof summaryEnv.AUTOMEM_ENDPOINT === 'string' ? summaryEnv.AUTOMEM_ENDPOINT : undefined;
+  const endpoint =
+    cliOptions.endpoint ||
+    process.env.AUTOMEM_ENDPOINT ||
+    existingSummaryEndpoint ||
+    'http://127.0.0.1:8001';
 
   log('\n📊 Configuration Status:', cliOptions.quiet);
   log(`  ✅ Skill installed: ~/.openclaw/skills/automem/SKILL.md`, cliOptions.quiet);
