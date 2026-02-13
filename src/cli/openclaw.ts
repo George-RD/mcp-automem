@@ -249,8 +249,7 @@ function installSkill(options: OpenClawSetupOptions): void {
   const skillSource = path.join(TEMPLATE_ROOT, 'skill', 'SKILL.md');
 
   if (!fs.existsSync(skillSource)) {
-    console.error(`❌ Skill template not found: ${skillSource}`);
-    process.exit(1);
+    throw new Error(`❌ Skill template not found: ${skillSource}`);
   }
 
   const content = fs.readFileSync(skillSource, 'utf8');
@@ -410,29 +409,25 @@ function parseArgs(args: string[]): OpenClawSetupOptions {
     switch (arg) {
       case '--workspace':
         if (i + 1 >= args.length) {
-          console.error('Error: --workspace requires a path');
-          process.exit(1);
+          throw new Error('Error: --workspace requires a path');
         }
         options.workspace = args[++i];
         break;
       case '--name':
         if (i + 1 >= args.length) {
-          console.error('Error: --name requires a value');
-          process.exit(1);
+          throw new Error('Error: --name requires a value');
         }
         options.projectName = args[++i];
         break;
       case '--endpoint':
         if (i + 1 >= args.length) {
-          console.error('Error: --endpoint requires a URL');
-          process.exit(1);
+          throw new Error('Error: --endpoint requires a URL');
         }
         options.endpoint = args[++i];
         break;
       case '--api-key':
         if (i + 1 >= args.length) {
-          console.error('Error: --api-key requires a value');
-          process.exit(1);
+          throw new Error('Error: --api-key requires a value');
         }
         options.apiKey = args[++i];
         break;
@@ -457,8 +452,8 @@ function parseArgs(args: string[]): OpenClawSetupOptions {
 }
 
 export async function runOpenClawSetup(args: string[] = []): Promise<void> {
-  const options = parseArgs(args);
   try {
+    const options = parseArgs(args);
     await applyOpenClawSetup(options);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

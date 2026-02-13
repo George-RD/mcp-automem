@@ -28,9 +28,6 @@ sanitize_command_for_log() {
         s/((?:^|\s)(?:GH_TOKEN|GITHUB_TOKEN|AUTOMEM_API_KEY|API_KEY)=)\S+/${1}[REDACTED]/ig;
         s/\b(token|api[_-]?key)\s*[:=]\s*([^\s"'"'"'`,;]+)/$1=[REDACTED]/ig;
     ')
-    if [ ${#value} -gt 200 ]; then
-        value="${value:0:200}..."
-    fi
     echo "$value"
 }
 
@@ -69,7 +66,11 @@ if [ -z "$COMMAND" ] || ! echo "$COMMAND" | grep -qiE "(git commit|gh (issue|pr|
 fi
 
 SAFE_COMMAND=$(sanitize_command_for_log "$COMMAND")
-log_message "Git workflow command detected: $SAFE_COMMAND"
+LOG_COMMAND="$SAFE_COMMAND"
+if [ ${#LOG_COMMAND} -gt 200 ]; then
+    LOG_COMMAND="${LOG_COMMAND:0:200}..."
+fi
+log_message "Git workflow command detected: $LOG_COMMAND"
 
 # Determine workflow type and extract details
 WORKFLOW_TYPE="unknown"
@@ -226,10 +227,11 @@ if [ ${#CONTENT} -gt $MAX_CONTENT_LEN ]; then
     CONTENT="${CONTENT:0:$MAX_CONTENT_LEN}..."
 fi
 
-# Truncate command in metadata (heredocs can be huge)
+# Sanitize and truncate command in metadata (heredocs can be huge)
+METADATA_COMMAND="$SAFE_COMMAND"
 MAX_CMD_LEN=500
-if [ ${#COMMAND} -gt $MAX_CMD_LEN ]; then
-    COMMAND="${COMMAND:0:$MAX_CMD_LEN}..."
+if [ ${#METADATA_COMMAND} -gt $MAX_CMD_LEN ]; then
+    METADATA_COMMAND="${METADATA_COMMAND:0:$MAX_CMD_LEN}..."
 fi
 
 # Queue memory for processing
@@ -239,7 +241,7 @@ MEMORY_RECORD=$(jq -cn \
     --arg content "$CONTENT" \
     --arg type "$WORKFLOW_TYPE" \
     --arg project "$PROJECT_NAME" \
-    --arg command "$COMMAND" \
+    --arg command "$METADATA_COMMAND" \
     --arg timestamp "$TIMESTAMP" \
     --arg extra_tags "$EXTRA_TAGS" \
     --argjson importance "$IMPORTANCE" \
