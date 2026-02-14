@@ -110,8 +110,9 @@ if echo "$COMMAND" | grep -qi "git commit"; then
     case "$COMMIT_MSG" in
         feat:*|feat\(*) IMPORTANCE=0.6 ;;
         fix:*|fix\(*)   IMPORTANCE=0.6 ;;
+        perf:*|perf\(*) IMPORTANCE=0.6 ;;
         chore:*|docs:*|style:*|ci:*) IMPORTANCE=0.4 ;;
-        refactor:*|perf:*|test:*) IMPORTANCE=0.5 ;;
+        refactor:*|test:*) IMPORTANCE=0.5 ;;
         *)               IMPORTANCE=0.5 ;;
     esac
 
@@ -161,7 +162,7 @@ elif echo "$COMMAND" | grep -qi "gh pr merge"; then
             # Extract linked issue numbers from PR body
             PR_BODY_ISSUES=$(gh pr view "$PR_NUM" --repo "$PR_REPO" --json body -q '.body' 2>/dev/null \
                 | perl -nle 'print $1 while /(?:closes?|fixes?|resolves?)\s+#(\d+)/gi' \
-                | sort -u | paste -sd, -)
+                | sort -u | paste -s -d ',' -)
         fi
     fi
 
