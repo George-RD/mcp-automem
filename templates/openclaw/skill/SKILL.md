@@ -12,13 +12,13 @@ optional_env:
 
 You have persistent memory via AutoMem. Call the HTTP API directly with `curl`.
 
-**IMPORTANT:** Always include the auth header in every request. Do NOT use mcporter, MCP tools, or any other method — just `curl`.
+**IMPORTANT:** Include the auth header when `AUTOMEM_API_KEY` is set. If your AutoMem service runs without auth (local/dev), omit the header. Do NOT use mcporter, MCP tools, or any other method — just `curl`.
 
 ## API Reference
 
 Base URL: `$AUTOMEM_ENDPOINT`
 
-Auth header (include on EVERY request): `-H "Authorization: Bearer $AUTOMEM_API_KEY"`
+Auth header (use when `AUTOMEM_API_KEY` is set): `-H "Authorization: Bearer $AUTOMEM_API_KEY"`
 
 ### Store a Memory
 
@@ -96,7 +96,7 @@ Only use this when curl calls are failing and you need to diagnose why. Do NOT r
 
 ### Troubleshooting
 
-- **401 Unauthorized** — You forgot the `-H "Authorization: Bearer $AUTOMEM_API_KEY"` header. Add it to every request.
+- **401 Unauthorized** — Missing/invalid `-H "Authorization: Bearer $AUTOMEM_API_KEY"` on authenticated deployments. Include it when `AUTOMEM_API_KEY` is set.
 - **Connection refused** — AutoMem service isn't running. Fall back to file-based memory silently.
 - **Empty results** — Try broader query terms, remove tag filters, or increase limit.
 

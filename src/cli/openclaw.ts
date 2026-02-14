@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
+import JSON5 from 'json5';
 
 interface OpenClawSetupOptions {
   workspace?: string;
@@ -22,59 +23,8 @@ function log(message: string, quiet?: boolean) {
   if (!quiet) console.log(message);
 }
 
-/**
- * Strip JSON5-style comments without corrupting URLs or strings containing `//`.
- * Handles single-line, block, and trailing commas.
- */
-function stripJsonComments(raw: string): string {
-  // Walk through the string character by character to respect quoted strings
-  let result = '';
-  let inString = false;
-  let i = 0;
-  while (i < raw.length) {
-    const ch = raw[i];
-    const next = raw[i + 1];
-
-    if (inString) {
-      result += ch;
-      if (ch === '\\') {
-        // Skip escaped character
-        result += next || '';
-        i += 2;
-        continue;
-      }
-      if (ch === '"') inString = false;
-      i++;
-      continue;
-    }
-
-    if (ch === '"') {
-      inString = true;
-      result += ch;
-      i++;
-      continue;
-    }
-
-    // Single-line comment
-    if (ch === '/' && next === '/') {
-      while (i < raw.length && raw[i] !== '\n') i++;
-      continue;
-    }
-
-    // Block comment
-    if (ch === '/' && next === '*') {
-      i += 2;
-      while (i < raw.length && !(raw[i] === '*' && raw[i + 1] === '/')) i++;
-      i += 2; // skip closing */
-      continue;
-    }
-
-    result += ch;
-    i++;
-  }
-
-  // Strip trailing commas before } or ]
-  return result.replace(/,\s*([}\]])/g, '$1');
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
 function detectProjectName(): string {
@@ -89,7 +39,10 @@ function detectProjectName(): string {
   }
   // 2) git remote
   try {
-    const remote = execSync('git remote get-url origin 2>/dev/null', { encoding: 'utf8' }).trim();
+    const remote = execSync('git remote get-url origin', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
     if (remote) {
       const match = remote.match(/\/([^/]+?)(\.git)?$/);
       if (match) return match[1];
@@ -160,7 +113,7 @@ function resolveWorkspaceDir(explicit?: string): string | null {
   const envWorkspace = process.env.OPENCLAW_WORKSPACE || process.env.CLAWDBOT_WORKSPACE;
   if (envWorkspace) {
     const resolved = resolveTildePath(envWorkspace);
-    if (fs.existsSync(resolved)) return resolved;
+    return resolved;
   }
 
   // 3. OpenClaw config file
@@ -207,8 +160,9 @@ function readWorkspaceFromConfig(): string | null {
     if (!fs.existsSync(configPath)) continue;
     try {
       const raw = fs.readFileSync(configPath, 'utf8');
-      const stripped = stripJsonComments(raw);
-      const config = JSON.parse(stripped);
+      const parsed = JSON5.parse(raw);
+      if (!isPlainObject(parsed)) continue;
+      const config = parsed as Record<string, any>;
 
       const defaultWorkspace = config?.agents?.defaults?.workspace;
       if (defaultWorkspace && typeof defaultWorkspace === 'string') {
@@ -226,7 +180,7 @@ function readWorkspaceFromConfig(): string | null {
         }
       }
     } catch {
-      // JSON5 parsing failed, continue
+      // Parsing failed, continue
     }
   }
 
@@ -235,9 +189,8 @@ function readWorkspaceFromConfig(): string | null {
 
 /**
  * Read and return the OpenClaw config (openclaw.json).
- * Returns null if file doesn't exist or can't be parsed.
  */
-function readOpenClawConfig(): { config: any; configPath: string } | null {
+function readOpenClawConfig(): { config: any; configPath: string } {
   const homeDir = os.homedir();
   const configPath = path.join(homeDir, '.openclaw', 'openclaw.json');
 
@@ -247,8 +200,8 @@ function readOpenClawConfig(): { config: any; configPath: string } | null {
 
   try {
     const raw = fs.readFileSync(configPath, 'utf8');
-    const stripped = stripJsonComments(raw);
-    return { config: JSON.parse(stripped), configPath };
+    const parsed = JSON5.parse(raw);
+    return { config: isPlainObject(parsed) ? parsed : {}, configPath };
   } catch {
     return { config: {}, configPath };
   }
@@ -298,8 +251,7 @@ function installSkill(options: OpenClawSetupOptions): void {
   const skillSource = path.join(TEMPLATE_ROOT, 'skill', 'SKILL.md');
 
   if (!fs.existsSync(skillSource)) {
-    console.error(`❌ Skill template not found: ${skillSource}`);
-    process.exit(1);
+    throw new Error(`❌ Skill template not found: ${skillSource}`);
   }
 
   const content = fs.readFileSync(skillSource, 'utf8');
@@ -311,22 +263,24 @@ function installSkill(options: OpenClawSetupOptions): void {
  */
 function configureEnvVars(options: OpenClawSetupOptions): void {
   const result = readOpenClawConfig();
-  if (!result) return;
 
   const { config, configPath } = result;
-
-  const endpoint = options.endpoint || process.env.AUTOMEM_ENDPOINT || 'http://127.0.0.1:8001';
-  const apiKey = options.apiKey || process.env.AUTOMEM_API_KEY || '';
 
   // Deep-merge skills.entries.automem
   if (!config.skills) config.skills = {};
   if (!config.skills.entries) config.skills.entries = {};
 
-  const existingEnv = config.skills.entries?.automem?.env || {};
+  const rawAutomem = config.skills.entries?.automem;
+  const automemEntry = isPlainObject(rawAutomem) ? rawAutomem : {};
+  const rawEnv = automemEntry.env;
+  const existingEnv = isPlainObject(rawEnv) ? rawEnv : {};
+  const existingEndpoint = typeof existingEnv.AUTOMEM_ENDPOINT === 'string' ? existingEnv.AUTOMEM_ENDPOINT : undefined;
+  const endpoint = options.endpoint || process.env.AUTOMEM_ENDPOINT || existingEndpoint || 'http://127.0.0.1:8001';
+  const apiKey = options.apiKey || process.env.AUTOMEM_API_KEY || '';
 
   // CLI flags override existing config; existing config fills in gaps
   config.skills.entries.automem = {
-    ...config.skills.entries.automem,
+    ...automemEntry,
     enabled: true,
     env: {
       ...existingEnv,
@@ -336,8 +290,20 @@ function configureEnvVars(options: OpenClawSetupOptions): void {
   };
 
   if (options.dryRun) {
+    const dryRunAutomemEntry = isPlainObject(config.skills.entries.automem)
+      ? config.skills.entries.automem
+      : {};
+    const dryRunEnv = isPlainObject(dryRunAutomemEntry.env) ? dryRunAutomemEntry.env : {};
+    const redactedAutomemEntry = {
+      ...dryRunAutomemEntry,
+      env: {
+        ...dryRunEnv,
+        ...(typeof dryRunEnv.AUTOMEM_API_KEY === 'string' ? { AUTOMEM_API_KEY: '[REDACTED]' } : {}),
+      },
+    };
+
     log(`[DRY RUN] Would update: ${configPath}`, options.quiet);
-    log(`[DRY RUN] skills.entries.automem = ${JSON.stringify(config.skills.entries.automem, null, 2)}`, options.quiet);
+    log(`[DRY RUN] skills.entries.automem = ${JSON.stringify(redactedAutomemEntry, null, 2)}`, options.quiet);
     return;
   }
 
@@ -382,14 +348,19 @@ export async function applyOpenClawSetup(cliOptions: OpenClawSetupOptions): Prom
   const workspaceDir = resolveWorkspaceDir(cliOptions.workspace);
 
   if (!workspaceDir) {
-    console.error(`\n❌ Could not find OpenClaw workspace directory.`);
-    console.error(`\n   Checked:`);
-    console.error(`   • OPENCLAW_WORKSPACE environment variable`);
-    console.error(`   • OpenClaw config (~/.openclaw/openclaw.json)`);
-    console.error(`   • ~/.openclaw/workspace`);
-    console.error(`   • ~/clawd`);
-    console.error(`\n   Use --workspace <path> to specify manually.`);
-    process.exit(1);
+    const details = [
+      '',
+      '❌ Could not find OpenClaw workspace directory.',
+      '',
+      '   Checked:',
+      '   • OPENCLAW_WORKSPACE environment variable',
+      '   • OpenClaw config (~/.openclaw/openclaw.json)',
+      '   • ~/.openclaw/workspace',
+      '   • ~/clawd',
+      '',
+      '   Use --workspace <path> to specify manually.',
+    ].join('\n');
+    throw new Error(details);
   }
 
   log(`\n🔧 Setting up OpenClaw AutoMem for: ${projectName}`, cliOptions.quiet);
@@ -409,7 +380,18 @@ export async function applyOpenClawSetup(cliOptions: OpenClawSetupOptions): Prom
   cleanOldAgentsBlock(workspaceDir, cliOptions);
 
   // Summary
-  const endpoint = cliOptions.endpoint || process.env.AUTOMEM_ENDPOINT || 'http://127.0.0.1:8001';
+  const { config: summaryConfig } = readOpenClawConfig();
+  const summaryAutomem = isPlainObject(summaryConfig?.skills?.entries?.automem)
+    ? summaryConfig.skills.entries.automem
+    : {};
+  const summaryEnv = isPlainObject(summaryAutomem.env) ? summaryAutomem.env : {};
+  const existingSummaryEndpoint =
+    typeof summaryEnv.AUTOMEM_ENDPOINT === 'string' ? summaryEnv.AUTOMEM_ENDPOINT : undefined;
+  const endpoint =
+    cliOptions.endpoint ||
+    process.env.AUTOMEM_ENDPOINT ||
+    existingSummaryEndpoint ||
+    'http://127.0.0.1:8001';
 
   log('\n📊 Configuration Status:', cliOptions.quiet);
   log(`  ✅ Skill installed: ~/.openclaw/skills/automem/SKILL.md`, cliOptions.quiet);
@@ -439,29 +421,25 @@ function parseArgs(args: string[]): OpenClawSetupOptions {
     switch (arg) {
       case '--workspace':
         if (i + 1 >= args.length) {
-          console.error('Error: --workspace requires a path');
-          process.exit(1);
+          throw new Error('Error: --workspace requires a path');
         }
         options.workspace = args[++i];
         break;
       case '--name':
         if (i + 1 >= args.length) {
-          console.error('Error: --name requires a value');
-          process.exit(1);
+          throw new Error('Error: --name requires a value');
         }
         options.projectName = args[++i];
         break;
       case '--endpoint':
         if (i + 1 >= args.length) {
-          console.error('Error: --endpoint requires a URL');
-          process.exit(1);
+          throw new Error('Error: --endpoint requires a URL');
         }
         options.endpoint = args[++i];
         break;
       case '--api-key':
         if (i + 1 >= args.length) {
-          console.error('Error: --api-key requires a value');
-          process.exit(1);
+          throw new Error('Error: --api-key requires a value');
         }
         options.apiKey = args[++i];
         break;
@@ -476,6 +454,9 @@ function parseArgs(args: string[]): OpenClawSetupOptions {
         options.quiet = true;
         break;
       default:
+        if (arg.startsWith('-')) {
+          console.warn(`Warning: Unknown option "${arg}" ignored. Use --help for supported options.`);
+        }
         break;
     }
   }
@@ -483,6 +464,12 @@ function parseArgs(args: string[]): OpenClawSetupOptions {
 }
 
 export async function runOpenClawSetup(args: string[] = []): Promise<void> {
-  const options = parseArgs(args);
-  await applyOpenClawSetup(options);
+  try {
+    const options = parseArgs(args);
+    await applyOpenClawSetup(options);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(message);
+    process.exit(1);
+  }
 }

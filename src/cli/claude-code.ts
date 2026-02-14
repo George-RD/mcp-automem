@@ -18,6 +18,7 @@ const HOOK_SCRIPTS = [
   'capture-build-result.sh',
   'capture-test-pattern.sh',
   'capture-deployment.sh',
+  'capture-git-workflow.sh',
   'session-memory.sh',
 ];
 const SUPPORT_SCRIPTS = [
