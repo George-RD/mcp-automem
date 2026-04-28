@@ -2,6 +2,78 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.15.0](https://github.com/George-RD/mcp-automem/compare/mcp-automem-v0.14.0...mcp-automem-v0.15.0) (2026-04-28)
+
+
+### Features
+
+* Add Claude Code plugin structure for AutoMem ([638dbd5](https://github.com/George-RD/mcp-automem/commit/638dbd5f4f933712e9a17f3e1627f5ad7c537454))
+* Add Cursor hooks integration with automatic memory capture ([86abd65](https://github.com/George-RD/mcp-automem/commit/86abd65234ec8e6d34ad3857a730122c39cb5510))
+* Add expansion filtering params for noise reduction ([1376277](https://github.com/George-RD/mcp-automem/commit/1376277ac91f0b43682a0e31d3c6d839620eab2d))
+* Add expansion filtering params for noise reduction ([2c1058e](https://github.com/George-RD/mcp-automem/commit/2c1058e5c50cd897000ef45e800e3a062dd098f4))
+* add integration tests and CLI smoke tests ([#51](https://github.com/George-RD/mcp-automem/issues/51)) ([f89a92d](https://github.com/George-RD/mcp-automem/commit/f89a92dca138510bd02349d88f281205e465db47))
+* add MCP Registry support ([#16](https://github.com/George-RD/mcp-automem/issues/16)) ([ee9571e](https://github.com/George-RD/mcp-automem/commit/ee9571eb874eb188a48f58859cb43be368435c0c))
+* add memory content size guidelines and warnings ([5ac5833](https://github.com/George-RD/mcp-automem/commit/5ac5833cfd357dd173fbb7638d6e5b44a87e3fc8))
+* **api:** parity with AutoMem v0.15.2 via mode-multiplexed params ([#112](https://github.com/George-RD/mcp-automem/issues/112)) ([b81c63a](https://github.com/George-RD/mcp-automem/commit/b81c63ae8f833feb4f6fb21e795c389f99a5dbe8))
+* **claude-code:** add SessionStart hook for automatic memory recall ([2a4859b](https://github.com/George-RD/mcp-automem/commit/2a4859b1d552dd147246701da5a9513aa66f86e8))
+* **claude-code:** add SessionStart hook for automatic memory recall ([8e4fdc7](https://github.com/George-RD/mcp-automem/commit/8e4fdc7ccb69ad6b9663277d402a39c71e3c6eb3))
+* **cursor-hooks:** Add automatic log rotation to prevent disk bloat ([da0b265](https://github.com/George-RD/mcp-automem/commit/da0b26515bc0304db10c7d6c146fde3af5ffee44))
+* **cursor-hooks:** Add verbose logging to show memory content ([9b90443](https://github.com/George-RD/mcp-automem/commit/9b904431ca4975ccf373e2a9399633106fe1d9fd))
+* **cursor:** split global and project rules ([#81](https://github.com/George-RD/mcp-automem/issues/81)) ([c34a8db](https://github.com/George-RD/mcp-automem/commit/c34a8db61b6213bb31863e945edd71cb32138afd))
+* Initial release of MCP AutoMem server ([4b5f262](https://github.com/George-RD/mcp-automem/commit/4b5f262275fc6076d1f1252111f1636d0e80f1f8))
+* Memory content size guidelines and warnings ([909f07a](https://github.com/George-RD/mcp-automem/commit/909f07ab91ad2c48945d363192e121c7a3f1c3db))
+* **openclaw:** plugin-first memory parity with shared policy ([#107](https://github.com/George-RD/mcp-automem/issues/107)) ([613e415](https://github.com/George-RD/mcp-automem/commit/613e415e7ca891e8209f066d2d41de0c70069102))
+* **openclaw:** replace mcporter with native curl-based skill ([83d8e36](https://github.com/George-RD/mcp-automem/commit/83d8e36ca2b7bc67d1e246cdb8d6a346047f617a))
+* overhaul OpenClaw plugin, MCP, and skill setup ([#77](https://github.com/George-RD/mcp-automem/issues/77)) ([00d9ae2](https://github.com/George-RD/mcp-automem/commit/00d9ae2756cbddd6d9c5062c706ed25e3cab9f90))
+* **recall:** add expansion filtering parameters (expand_min_importance, expand_min_strength) ([fb4bfd5](https://github.com/George-RD/mcp-automem/commit/fb4bfd5e4319693d5491a39f6d4680167d729b82))
+* rename AUTOMEM_ENDPOINT to AUTOMEM_API_URL ([#110](https://github.com/George-RD/mcp-automem/issues/110)) ([29f9e8d](https://github.com/George-RD/mcp-automem/commit/29f9e8df87e12ab48d32f22e4006cf6d7ca548fc))
+* sync tool schemas for SSE/MCP parity ([#71](https://github.com/George-RD/mcp-automem/issues/71)) ([4a6c25c](https://github.com/George-RD/mcp-automem/commit/4a6c25c51477a52679c580d8d5d399b6bd00bb91))
+* unify recall_memory and recall_memory_multi into single tool ([ef866da](https://github.com/George-RD/mcp-automem/commit/ef866dad1bf9324804616cfe52eeba2f6c7d38a2))
+* upgrade SDK to 1.25.1 and add MCP registry support ([766c857](https://github.com/George-RD/mcp-automem/commit/766c857aacf8be9dc4056e99a84ace952713d354))
+* upgrade SDK to 1.25.1 and add MCP registry support ([14a06ce](https://github.com/George-RD/mcp-automem/commit/14a06ce7f0b7797289f149d04eed0b871d4caa0e))
+* v0.8.0 - Advanced recall capabilities and MCP best practices ([c8f1dcc](https://github.com/George-RD/mcp-automem/commit/c8f1dcce261fd1beacee7ee90becb1ad648a96df))
+* v0.8.0 - Advanced recall capabilities and MCP best practices ([48e1fa2](https://github.com/George-RD/mcp-automem/commit/48e1fa263ec93c309a2e8bc1fe063a1a243d9688))
+
+
+### Bug Fixes
+
+* accept HTTP 429 in link checker to prevent false CI failures ([#93](https://github.com/George-RD/mcp-automem/issues/93)) ([4fc5124](https://github.com/George-RD/mcp-automem/commit/4fc512469fe070f06ac7173d2877d6b398b4610c))
+* add exponential backoff retry logic for transient API failures ([6395689](https://github.com/George-RD/mcp-automem/commit/63956893dd3b911038c6d8eaaabf5ec57b941c7a))
+* add missing success field to associate_memories response ([#12](https://github.com/George-RD/mcp-automem/issues/12)) ([baa697b](https://github.com/George-RD/mcp-automem/commit/baa697b6fd07a4e2e9b193ee0e7f5e88b476e0d0))
+* add security.yml workflow with CodeQL v4 ([861d60f](https://github.com/George-RD/mcp-automem/commit/861d60f3d6a00484e9dfcc8f96c876ae61b7c581))
+* Add structuredContent to all tool handlers ([c0615ef](https://github.com/George-RD/mcp-automem/commit/c0615ef624c8cc702603ced72ae7d0cab788cd6a))
+* address coderabbit review feedback ([7e15521](https://github.com/George-RD/mcp-automem/commit/7e15521097fc56b604b887b1b345ac7dbeaacb9e))
+* align associate_memories public relationship taxonomy ([#76](https://github.com/George-RD/mcp-automem/issues/76)) ([daead2e](https://github.com/George-RD/mcp-automem/commit/daead2e6e3e21de172a362638f270c6faea0b0b1))
+* allowlist MCP SDK ReDoS vulnerability (GHSA-8r9q-7v3j-jr4g) ([129b665](https://github.com/George-RD/mcp-automem/commit/129b665cd2fa59628d229e3855aee13852c2c68a))
+* **auth:** accept AUTOMEM_API_TOKEN alias ([#27](https://github.com/George-RD/mcp-automem/issues/27)) ([3dfcd1f](https://github.com/George-RD/mcp-automem/commit/3dfcd1f18346677d487575004ad5ec50007a40cf)), closes [#26](https://github.com/George-RD/mcp-automem/issues/26)
+* **claude-code:** avoid osascript quoting errors ([#30](https://github.com/George-RD/mcp-automem/issues/30)) ([474c47b](https://github.com/George-RD/mcp-automem/commit/474c47b97cfe2ec76b5857ce775d350edc10a0af))
+* correct .mcpb filename and update community links ([#49](https://github.com/George-RD/mcp-automem/issues/49)) ([a3b8c71](https://github.com/George-RD/mcp-automem/commit/a3b8c71f54a3d58d5d54e2c7ac0cb9dddfbb4ff0))
+* **cursor-hooks:** Read AUTOMEM env vars from mcp.json ([7c73ce3](https://github.com/George-RD/mcp-automem/commit/7c73ce38cb2a5e32469703d34bf9569fde2084e9))
+* **deps:** revert eslint to v9 and typescript to 5.x for compatibility ([#91](https://github.com/George-RD/mcp-automem/issues/91)) ([86943c6](https://github.com/George-RD/mcp-automem/commit/86943c6680ccda0508dd7b2ef3e3abc0f051283d))
+* downgrade @eslint/js to ^9.0.0 to match eslint peer dependency ([#92](https://github.com/George-RD/mcp-automem/issues/92)) ([682fded](https://github.com/George-RD/mcp-automem/commit/682fdeddc835b80711eb84656c67d46123a10ffb))
+* enforce security audits and fix server.json structure ([f7dc0a1](https://github.com/George-RD/mcp-automem/commit/f7dc0a1aa63f0c1f021f661297022c36718b7e73))
+* exclude GitHub compare URLs from link checker ([#52](https://github.com/George-RD/mcp-automem/issues/52)) ([d7212fd](https://github.com/George-RD/mcp-automem/commit/d7212fd6507d2b1c56424c8da46dd8a055463ce7))
+* function name in CLAUDE_MD_MEMORY_RULES.md ([3d102d5](https://github.com/George-RD/mcp-automem/commit/3d102d53adcd81dda8deca2f8beb46115f1a3fd3))
+* harden hook scripts and queue cleanup ([0d992d7](https://github.com/George-RD/mcp-automem/commit/0d992d721184ca3a058b91c740094bf1c218add9))
+* **hooks:** add stdin parsing, truncation guards, and dedup checks ([#85](https://github.com/George-RD/mcp-automem/issues/85)) ([8279844](https://github.com/George-RD/mcp-automem/commit/82798444e61e9d049e421957a0490a75ff104cc0))
+* improve Claude Code Windows Python compatibility ([#102](https://github.com/George-RD/mcp-automem/issues/102)) ([f0a4a0b](https://github.com/George-RD/mcp-automem/commit/f0a4a0bc2659845599488850bca95fbda7b89f78))
+* Match structuredContent to outputSchema for recall_memory ([97e8d0f](https://github.com/George-RD/mcp-automem/commit/97e8d0f30914221231ac5ba7bc203a1e82937144))
+* **plugin:** make process-session-memory.py self-contained ([#39](https://github.com/George-RD/mcp-automem/issues/39)) ([a96173c](https://github.com/George-RD/mcp-automem/commit/a96173c9d56cb2ed0fb2a4d8396445390668a991)), closes [#36](https://github.com/George-RD/mcp-automem/issues/36)
+* prevent dotenv stdout noise in stdio mode ([#56](https://github.com/George-RD/mcp-automem/issues/56)) ([e8b80ac](https://github.com/George-RD/mcp-automem/commit/e8b80ac0176440d1ffb9ef83b73e4674ef90326a))
+* **queue:** handle ENOENT errors when deleting queue file ([#29](https://github.com/George-RD/mcp-automem/issues/29)) ([a98f2e5](https://github.com/George-RD/mcp-automem/commit/a98f2e55920181b2757edb7ed13f215846d68915))
+* **recall:** remove legacy tag merge fallback ([#82](https://github.com/George-RD/mcp-automem/issues/82)) ([5ca6fae](https://github.com/George-RD/mcp-automem/commit/5ca6fae2638e4c08cc1ee9eadd76b5afdbcdb6ee))
+* recover dependabot workflow compatibility ([#104](https://github.com/George-RD/mcp-automem/issues/104)) ([22208a2](https://github.com/George-RD/mcp-automem/commit/22208a20fa648f552bd61237bf66d037f974758f))
+* reduce Cursor stderr noise and stdio flapping ([6354d64](https://github.com/George-RD/mcp-automem/commit/6354d64cf6fde6f12996da9e2894e8de3e934851))
+* reduce Cursor stderr noise and stdio flapping ([c07171a](https://github.com/George-RD/mcp-automem/commit/c07171a75d390524d197da1c18c3bb5d8850be9e))
+* Refactor AutoMem plugin structure and update docs ([0c2453a](https://github.com/George-RD/mcp-automem/commit/0c2453a73fcaeff2081dafd036dca4b67a43191c))
+* reject oversized memories and use placeholder for month tags ([bc6f730](https://github.com/George-RD/mcp-automem/commit/bc6f7301cf3f003ab47ac0de51b158fb3c187473))
+* remove duplicate hooks declaration causing load error ([#35](https://github.com/George-RD/mcp-automem/issues/35)) ([65d6db5](https://github.com/George-RD/mcp-automem/commit/65d6db54c7b450b33af02f6659c420cade1cd0c2))
+* resolve MD033 linter warnings for HTML elements ([bc2a4a5](https://github.com/George-RD/mcp-automem/commit/bc2a4a5996ba8fb63941d53517b3ab45d16f953d))
+* sync all version files and add to release-please ([#63](https://github.com/George-RD/mcp-automem/issues/63)) ([a967ca9](https://github.com/George-RD/mcp-automem/commit/a967ca981c59ae1e60acda51aec6fd1761f399dd))
+* Update Cursor install button to official deeplink format ([70ef846](https://github.com/George-RD/mcp-automem/commit/70ef846c6cddea53d5be925d98826f683e690954))
+* use correct better-npm-audit version (3.11.0) ([31db0ab](https://github.com/George-RD/mcp-automem/commit/31db0aba8fc7a77c7296779310f5f908cb22d372))
+* use release-please manifest mode for server.json updates ([#46](https://github.com/George-RD/mcp-automem/issues/46)) ([15a5831](https://github.com/George-RD/mcp-automem/commit/15a5831d7f06f0da5d487a22286353fdc5451f45))
+
 ## [0.14.0](https://github.com/verygoodplugins/mcp-automem/compare/mcp-automem-v0.13.0...mcp-automem-v0.14.0) (2026-04-23)
 
 
